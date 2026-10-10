@@ -1,0 +1,63 @@
+# ==========================================
+# Dependencias de Node (api, app y cualquier nivel)
+# ==========================================
+node_modules/
+api/node_modules/
+app/node_modules/
+
+# ==========================================
+# Documentos de Word y Ofimática
+# ==========================================
+# Word
+*.doc
+*.docx
+*.docm
+*.dot
+*.dotx
+
+# Archivos temporales de Word (ej. ~$archivo.docx)
+~$*.doc*
+~$*.dot*
+
+# Otros formatos de oficina comunes
+*.pdf
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.odt
+
+# ==========================================
+# Salidas de compilación (React / Node)
+# ==========================================
+dist/
+build/
+out/
+.next/
+
+# ==========================================
+# Variables de entorno y secretos
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ==========================================
+# Logs y cachés
+# ==========================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# Archivos del sistema y editores
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
