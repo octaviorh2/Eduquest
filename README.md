@@ -72,13 +72,25 @@ Asegúrate de tener instaladas las siguientes herramientas en tu sistema operati
 * **[Node.js](https://nodejs.org/)** versión `20.x` o superior.
 * **[npm](https://www.npmjs.com/)** versión `10.x` o superior.
 * **[Git](https://git-scm.com/)**.
-* **[MySQL](https://www.mysql.com/) 8.x** (Instalado de forma local o corriendo en un contenedor de [Docker](https://www.docker.com/)).
+* **[MySQL](https://www.mysql.com/) 8.x** (Instalado de forma local en tu equipo o corriendo en un contenedor de [Docker](https://www.docker.com/)).
+
+---
+
+> [!IMPORTANT]
+> ### ⚠️ TRES PASOS OBLIGATORIOS ANTES DE EJECUTAR (`npm run dev`)
+> Para que el sistema funcione correctamente y no arroje errores de conexión (`ECONNREFUSED` o `ER_BAD_DB_ERROR`), **debes cumplir con estos 3 pasos**:
+> 1. **Tener MySQL corriendo:** Asegurarte de que tu motor MySQL esté activo en el puerto `3306` (sea por Docker o servicio local).
+> 2. **Crear la Base de Datos:** Debes crear manualmente la base de datos ejecutando:  
+>    `CREATE DATABASE IF NOT EXISTS eduquest_db;`
+> 3. **Poner la Cadena de Conexión:** Crear el archivo `api/.env` colocando el host, puerto, usuario y contraseña de tu servidor MySQL.
+>
+> *(Nota: Las tablas relacionales, columnas y datos semilla se crearán de forma automática una vez el backend se conecte)*.
 
 ---
 
 ## 🚀 Instrucciones de Instalación y Configuración Técnica
 
-Sigue estos sencillos pasos para levantar el entorno completo de desarrollo local:
+Sigue estos pasos en orden para levantar el entorno completo de desarrollo local:
 
 ### Paso 1: Clonar el Repositorio
 
@@ -91,43 +103,65 @@ cd Eduquest
 
 ---
 
-### Paso 2: Configurar la Base de Datos MySQL
+### Paso 2: Tener MySQL Activo y Crear la Base de Datos (`eduquest_db`)
 
-1. Asegúrate de tener una instancia de MySQL en ejecución en el puerto `3306`. Si utilizas Docker, puedes levantarla fácilmente:
+El backend de EduQuest se conecta a una base de datos llamada **`eduquest_db`**. Dado que los motores MySQL no crean bases de datos de forma automática si no existen, **debes crearla antes de iniciar**:
+
+#### Opción A: Si utilizas Docker (Recomendado)
+1. Inicia un contenedor con MySQL 8.4:
    ```bash
-   docker run --name mysql-dev -e MYSQL_ROOT_PASSWORD=123 -p 3306:3306 -d mysql:8.4
+   docker run --name mysql-dev -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 -d mysql:8.4
+   ```
+2. Crea la base de datos dentro del contenedor:
+   ```bash
+   docker exec -i mysql-dev mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS eduquest_db;"
    ```
 
-2. **Crear la base de datos** (requisito previo para que el backend pueda conectarse):
-   Accede a tu cliente de MySQL o Workbench y ejecuta:
+#### Opción B: Si tienes MySQL instalado en tu PC (MySQL Workbench, phpMyAdmin, DBeaver o CLI)
+1. Abre tu cliente de MySQL o terminal y conéctate como administrador.
+2. Ejecuta la siguiente sentencia SQL:
    ```sql
    CREATE DATABASE IF NOT EXISTS eduquest_db;
    ```
 
-> 💡 **Autogeneración del Esquema y Semillas:**  
-> **No necesitas importar scripts SQL manuales.** Al encender el servidor backend, el código ejecuta automáticamente `inicializarBaseDeDatos()`, creando todas las tablas relacionales (`usuarios`, `materias`, `niveles`, `preguntas`, `opciones`, `progreso_estudiantes`, `intentos_trivia`) con integridad referencial, actualizando columnas y sembrando las materias y preguntas formativas iniciales de manera limpia.
+> 💡 **¿Y las tablas?**  
+> **No necesitas ejecutar scripts SQL manuales para crear las tablas.** Al iniciar el backend con `npm run dev`, la aplicación ejecuta automáticamente la función `inicializarBaseDeDatos()`, que crea por ti todas las tablas relacionales (`usuarios`, `materias`, `niveles`, `preguntas`, `opciones`, `progreso_estudiantes`, `intentos_trivia`) y actualiza sus columnas con integridad referencial.
 
 ---
 
-### Paso 3: Configurar Variables de Entorno del Backend
+### Paso 3: Configurar la Cadena y Variables de Conexión (`api/.env`)
 
-Crea un archivo llamado `.env` dentro de la carpeta `api/` (puedes tomar como referencia `api/.env.example`):
+Debes indicarle al backend cómo conectarse a tu MySQL. Para ello, crea un archivo llamado `.env` dentro de la carpeta `api/` (puedes duplicar la plantilla `api/.env.example`):
+
+**En Windows (PowerShell):**
+```powershell
+Copy-Item api/.env.example api/.env
+```
+
+**En Linux / Mac / Git Bash:**
+```bash
+cp api/.env.example api/.env
+```
+
+Abre `api/.env` con tu editor y coloca tus credenciales reales de conexión:
 
 ```env
 PORT=5000
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=tu_contrasena_aqui
+DB_PASSWORD=tu_contraseña_aqui
 DB_NAME=eduquest_db
 JWT_SECRET=eduquest_clave_secreta_jwt_2026
 ```
+
+> ⚠️ **Importante:** Asegúrate de que `DB_USER` y `DB_PASSWORD` coincidan con el usuario y contraseña de tu servidor MySQL local o de Docker.
 
 ---
 
 ### Paso 4: Instalar Dependencias
 
-Desde la raíz del repositorio, instala las dependencias de la raíz, del backend y del frontend:
+Desde la **raíz del repositorio**, instala las dependencias de la raíz, del backend y del frontend:
 
 ```bash
 # 1. Dependencias de la raíz (concurrently)
