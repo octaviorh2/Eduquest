@@ -1,122 +1,109 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AuthProvider, { useAuth } from './context/AuthContext';
+import LandingPage from './modules/landing/pages/LandingPage';
+import LoginPage from './modules/auth/LoginPage';
+import RegisterPage from './modules/auth/RegisterPage';
+import DocentePage from './modules/docente/pages/DocentePage';
+import EstudiantePage from './modules/estudiante/pages/EstudiantePage';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Componente para proteger rutas según autenticación y rol
+function RutaProtegida({
+  children,
+  rolRequerido
+}: {
+  children: React.ReactNode;
+  rolRequerido?: 'DOCENTE' | 'ESTUDIANTE';
+}) {
+  const { usuario, cargando } = useAuth();
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-black text-slate-400 bg-slate-50 font-['Nunito']">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#58CC02] border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-bold text-slate-500">Cargando sesión...</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </div>
+    );
+  }
 
-      <div className="ticks"></div>
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  if (rolRequerido && usuario.rol !== rolRequerido) {
+    // Si intenta ingresar a un rol distinto, redirige a su panel correspondiente
+    return <Navigate to={usuario.rol === 'DOCENTE' ? '/docente' : '/estudiante'} replace />;
+  }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  return <>{children}</>;
 }
 
-export default App
+// Componente para rutas públicas (evita login si ya tiene sesión)
+function RutaPublica({ children }: { children: React.ReactNode }) {
+  const { usuario, cargando } = useAuth();
+
+  if (cargando) return null;
+
+  if (usuario) {
+    return <Navigate to={usuario.rol === 'DOCENTE' ? '/docente' : '/estudiante'} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* Ruta 1: Landing Page pública */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Ruta 2: Inicio de Sesión */}
+          <Route
+            path="/login"
+            element={
+              <RutaPublica>
+                <LoginPage />
+              </RutaPublica>
+            }
+          />
+
+          {/* Ruta 3: Registro de Usuario */}
+          <Route
+            path="/registro"
+            element={
+              <RutaPublica>
+                <RegisterPage />
+              </RutaPublica>
+            }
+          />
+
+          {/* Ruta 4: Portal del Docente (Protegido para DOCENTE) */}
+          <Route
+            path="/docente"
+            element={
+              <RutaProtegida rolRequerido="DOCENTE">
+                <DocentePage />
+              </RutaProtegida>
+            }
+          />
+
+          {/* Ruta 5: Portal del Estudiante (Protegido para ESTUDIANTE) */}
+          <Route
+            path="/estudiante"
+            element={
+              <RutaProtegida rolRequerido="ESTUDIANTE">
+                <EstudiantePage />
+              </RutaProtegida>
+            }
+          />
+
+          {/* Ruta por defecto */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

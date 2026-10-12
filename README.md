@@ -53,11 +53,12 @@ EduQuest transforma el estudio en una **experiencia de micro-aprendizaje diario*
 ### Backend (`/api`)
 * **Entorno de Ejecución:** [Node.js](https://nodejs.org/) (v20+) con ES Modules nativos (`"type": "module"`).
 * **Framework Web:** [Express](https://expressjs.com/) (v5.x).
+* **Base de Datos:** [MySQL](https://www.mysql.com/) 8.x en Docker / local mediante cliente optimizado con Connection Pool (`mysql2/promise`).
 * **Lenguaje:** [TypeScript](https://www.typescriptlang.org/) con tipado estricto.
 * **Ejecución en Desarrollo:** [tsx](https://github.com/privatenumber/tsx) para transpilación y recarga en caliente instantánea.
 
 ### Frontend (`/app`)
-* **Biblioteca Principal:** [React](https://react.dev/) (v18+).
+* **Biblioteca Principal:** [React](https://react.dev/) (v19+).
 * **Empaquetador y Servidor Local:** [Vite](https://vitejs.dev/) (compilación ultrarrápida mediante HMR).
 * **Estilos y Diseño Táctil:** [Tailwind CSS](https://tailwindcss.com/) configurado con utilidades para botones 3D estilo Duolingo (`active:translate-y-1` y sombras sólidas inferiores).
 * **Efectos de Sonido:** Sintetizados en tiempo real mediante **Web Audio API** nativa (sin archivos pesados `.mp3` o errores de red 404).
@@ -71,10 +72,11 @@ Asegúrate de tener instaladas las siguientes herramientas en tu sistema operati
 * **[Node.js](https://nodejs.org/)** versión `20.x` o superior.
 * **[npm](https://www.npmjs.com/)** versión `10.x` o superior.
 * **[Git](https://git-scm.com/)**.
+* **[MySQL](https://www.mysql.com/) 8.x** (Instalado de forma local o corriendo en un contenedor de [Docker](https://www.docker.com/)).
 
 ---
 
-## 🚀 Instrucciones de Instalación y Ejecución
+## 🚀 Instrucciones de Instalación y Configuración Técnica
 
 Sigue estos sencillos pasos para levantar el entorno completo de desarrollo local:
 
@@ -83,13 +85,47 @@ Sigue estos sencillos pasos para levantar el entorno completo de desarrollo loca
 Abre una terminal y clona el proyecto:
 
 ```bash
-git clone https://github.com/usuario/eduquest-app.git
-cd eduquest-app
+git clone https://github.com/octaviorh2/Eduquest.git
+cd Eduquest
 ```
 
 ---
 
-### Paso 2: Instalar Dependencias
+### Paso 2: Configurar la Base de Datos MySQL
+
+1. Asegúrate de tener una instancia de MySQL en ejecución en el puerto `3306`. Si utilizas Docker, puedes levantarla fácilmente:
+   ```bash
+   docker run --name mysql-dev -e MYSQL_ROOT_PASSWORD=123 -p 3306:3306 -d mysql:8.4
+   ```
+
+2. **Crear la base de datos** (requisito previo para que el backend pueda conectarse):
+   Accede a tu cliente de MySQL o Workbench y ejecuta:
+   ```sql
+   CREATE DATABASE IF NOT EXISTS eduquest_db;
+   ```
+
+> 💡 **Autogeneración del Esquema y Semillas:**  
+> **No necesitas importar scripts SQL manuales.** Al encender el servidor backend, el código ejecuta automáticamente `inicializarBaseDeDatos()`, creando todas las tablas relacionales (`usuarios`, `materias`, `niveles`, `preguntas`, `opciones`, `progreso_estudiantes`, `intentos_trivia`) con integridad referencial, actualizando columnas y sembrando las materias y preguntas formativas iniciales de manera limpia.
+
+---
+
+### Paso 3: Configurar Variables de Entorno del Backend
+
+Crea un archivo llamado `.env` dentro de la carpeta `api/` (puedes tomar como referencia `api/.env.example`):
+
+```env
+PORT=5000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=tu_contrasena_aqui
+DB_NAME=eduquest_db
+JWT_SECRET=eduquest_clave_secreta_jwt_2026
+```
+
+---
+
+### Paso 4: Instalar Dependencias
 
 Desde la raíz del repositorio, instala las dependencias de la raíz, del backend y del frontend:
 
@@ -106,16 +142,16 @@ npm install --prefix app
 
 ---
 
-### Paso 3: ¡Ejecutar Todo el Proyecto con un Solo Comando! 🚀
+### Paso 5: ¡Ejecutar Todo el Proyecto con un Solo Comando! 🚀
 
-Gracias a la configuración de `concurrently`, no necesitas abrir terminales separadas. Desde la **raíz del proyecto**, simplemente ejecuta:
+Gracias a la configuración de `concurrently`, desde la **raíz del proyecto**, simplemente ejecuta:
 
 ```bash
 npm run dev
 ```
 
 Este comando levantará en simultáneo:
-* 🟦 **API (Backend):** `http://localhost:5000` (con `tsx watch`)
+* 🟦 **API (Backend):** `http://localhost:5000` (con `tsx watch` y conexión activa a MySQL)
 * 🟩 **APP (Frontend):** `http://localhost:5173` (con `vite`)
 
 Ambos servicios correrán en la misma terminal con logs diferenciados por colores (`[API]` en azul y `[APP]` en verde). Si detienes el proceso (`Ctrl + C`), ambos se apagarán limpiamente.
